@@ -1,0 +1,6 @@
+../Core/Src/main.c:62:6:messageArrived	0	static
+../Core/Src/main.c:40:6:schedule	24	static
+../Core/Src/main.c:68:6:configureMQttClient	0	static
+../Core/Src/main.c:172:6:SystemClock_Config	72	static,ignoring_inline_asm
+../Core/Src/main.c:86:5:main	272	static,ignoring_inline_asm
+../Core/Src/main.c:286:6:Error_Handler	0	static,ignoring_inline_asm

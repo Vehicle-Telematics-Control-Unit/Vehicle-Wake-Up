@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "functional": "c",
+        "*.temp": "c"
+    }
+}

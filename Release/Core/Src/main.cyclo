@@ -1,0 +1,6 @@
+main.c:62:6:messageArrived	1
+main.c:40:6:schedule	2
+main.c:68:6:configureMQttClient	1
+main.c:172:6:SystemClock_Config	3
+main.c:86:5:main	4
+main.c:286:6:Error_Handler	1

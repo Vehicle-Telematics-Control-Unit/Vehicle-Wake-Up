@@ -1,0 +1,6 @@
+../Core/Src/w5500_interface.c:11:13:cs_sel	8	static
+../Core/Src/w5500_interface.c:18:13:cs_desel	8	static
+../Core/Src/w5500_interface.c:25:9:spi_rb	16	static
+../Core/Src/w5500_interface.c:34:6:spi_wb	16	static
+../Core/Src/w5500_interface.c:46:6:initializeW5500	56	static
+../Core/Src/w5500_interface.c:73:6:Socket_sendUDP	40	static

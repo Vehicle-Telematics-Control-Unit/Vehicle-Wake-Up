@@ -1,0 +1,6 @@
+w5500_interface.c:25:9:spi_rb	1
+w5500_interface.c:34:6:spi_wb	1
+w5500_interface.c:18:13:cs_desel	1
+w5500_interface.c:11:13:cs_sel	1
+w5500_interface.c:46:6:initializeW5500	1
+w5500_interface.c:73:6:Socket_sendUDP	2
