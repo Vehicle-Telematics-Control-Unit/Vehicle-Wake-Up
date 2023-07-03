@@ -8,13 +8,18 @@
 
 SPI_HandleTypeDef hspi1;
 
-static unsigned char targetIP[4] = {192, 168, 1, 90}; // set your mqtt server IP
+static unsigned char targetIP[4] = {209, 97, 131, 105}; // set your mqtt server IP
 static int targetPort = 1883;                           // mqtt server port
 
 static unsigned char tempBuffer[BUFFER_SIZE] = {};
 TIM_HandleTypeDef htim3;
 static uint8_t lock;
+static uint8_t flag;
 
+static uint8_t count;
+
+static MQTTMessage message;
+static char payload[30];
 struct opts_struct
 {
   char *clientid;
@@ -39,31 +44,34 @@ static void MX_TIM3_Init(void);
 /* User Defined functions */
 void configureMQttClient();
 void messageArrived(MessageData *md);
-
-void schedule(uint32_t waitFor)
-{
-  static MQTTMessage message;
-  static char payload[30];
-  message.qos = 0;
-  message.retained = 0;
-  message.payload = payload;
-
-  static uint32_t tickstart;
-  int count = 0;
-  if ((HAL_GetTick() - tickstart) > waitFor)
-  {
-    //	    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_12);
-    tickstart = HAL_GetTick();
-    count++;
-    sprintf(payload, "Publish Sensor value %d", count);
-    message.payloadlen = strlen(payload);
-    MQTTPublish(&mqttClient, "Publish/Topic", &message);
-  }
-}
+//
+//void schedule(uint32_t waitFor)
+//{
+//  static MQTTMessage message;
+//  static char payload[30];
+//  message.qos = 0;
+//  message.retained = 0;
+//  message.payload = payload;
+//  static uint32_t tickstart;
+//  int count = 0;
+//
+//  if ((HAL_GetTick() - tickstart) > waitFor)
+//    {
+//      //	    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_12);
+//      tickstart = HAL_GetTick();
+//      count++;
+//      sprintf(payload, "Publish Sensor value %d", count);
+//      message.payloadlen = strlen(payload);
+//      MQTTPublish(&mqttClient, "Publish/Topic", &message);
+//    }
+//
+//}
 
 // @brief messageArrived callback function
+
 void messageArrived(MessageData *md)
 {
+
   HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_12);
 }
 
@@ -90,18 +98,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  lock=0;
   }
 }
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	 uint8_t pinState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0); // Replace GPIOA and GPIO_PIN_0 accordingly
 	//lock is used to prevent bouncing in situations where two falling edges occur in close time
 	//so if two edges comes in close time after the first one lock will be one for 0.3 second->(3000*7200)/(72*10^6)
 
-
-		if(lock==0)
+	  if(lock==0)
 		{
-			HAL_TIM_Base_Start_IT(&htim3);
-			lock=1;
-			 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, SET);
+		  HAL_TIM_Base_Start_IT(&htim3);
+		  				lock=1;
+		    if (pinState == GPIO_PIN_SET)
+		    {
+		    	return;
+		    }
+		    else
+		    {
+				flag=1;
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, SET);
 
+		    }
 		}
 
 
@@ -165,6 +182,10 @@ int main(void)
   data.keepAliveInterval = 60;
   data.cleansession = 1;
 
+  message.qos = 0;
+  message.retained = 0;
+  message.payload = payload;
+
   while (MQTTConnect(&mqttClient, &data) != SUCCESSS)
     ;
 
@@ -178,10 +199,15 @@ int main(void)
 
   while (1)
   {
-
-    schedule(2000);
-
-    MQTTYield(&mqttClient, data.keepAliveInterval);
+//	  schedule(2000);
+	  MQTTYield(&mqttClient, data.keepAliveInterval);
+	  if(flag == 1 )
+		  {
+		  sprintf(payload, "{ \"id\": 1 }", count);
+		  message.payloadlen = strlen(payload);
+		  MQTTPublish(&mqttClient, "Server-TCU/WakeUp", &message);
+		  flag=0;
+		  }
   }
   /* USER CODE END 3 */
 }
@@ -279,7 +305,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 7200-1;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 50000;
+  htim3.Init.Period = 60000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -338,6 +364,11 @@ static void MX_GPIO_Init(void)
 	  GPIO_InitStruct.Pin = GPIO_PIN_1;
 	  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
 	  GPIO_InitStruct.Pull = GPIO_PULLUP;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	  /***********/
+	  GPIO_InitStruct.Pin = GPIO_PIN_0;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	  /*Configure GPIO pins : PA4 PA12 */
